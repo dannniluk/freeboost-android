@@ -10,6 +10,7 @@ import android.os.Build
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.content.FileProvider
+import androidx.core.content.edit
 import io.github.romanvht.byedpi.BuildConfig
 import io.github.romanvht.byedpi.R
 import kotlinx.coroutines.Dispatchers
@@ -49,31 +50,33 @@ object UpdaterUtils {
     }
 
     /** returns (tag, universal apk url) */
-    private fun checkLatest(): Pair<String, String?>? = try {
-        val connection = URL(API_URL).openConnection() as HttpURLConnection
-        connection.connectTimeout = 5000
-        connection.readTimeout = 8000
-        connection.setRequestProperty("User-Agent", "freeboost-android")
-        connection.setRequestProperty("Accept", "application/vnd.github+json")
-        if (connection.responseCode !in 200..299) return null
-        val json = JSONObject(connection.inputStream.bufferedReader().readText())
-        val tag = json.optString("tag_name")
-        var apkUrl: String? = null
-        val assets = json.optJSONArray("assets")
-        if (assets != null) {
-            for (i in 0 until assets.length()) {
-                val asset = assets.getJSONObject(i)
-                val name = asset.optString("name")
-                if (name.endsWith(".apk") && name.contains("universal")) {
-                    apkUrl = asset.optString("browser_download_url")
-                    break
+    private fun checkLatest(): Pair<String, String?>? {
+        return try {
+            val connection = URL(API_URL).openConnection() as HttpURLConnection
+            connection.connectTimeout = 5000
+            connection.readTimeout = 8000
+            connection.setRequestProperty("User-Agent", "freeboost-android")
+            connection.setRequestProperty("Accept", "application/vnd.github+json")
+            if (connection.responseCode !in 200..299) return null
+            val json = JSONObject(connection.inputStream.bufferedReader().readText())
+            val tag = json.optString("tag_name")
+            var apkUrl: String? = null
+            val assets = json.optJSONArray("assets")
+            if (assets != null) {
+                for (i in 0 until assets.length()) {
+                    val asset = assets.getJSONObject(i)
+                    val name = asset.optString("name")
+                    if (name.endsWith(".apk") && name.contains("universal")) {
+                        apkUrl = asset.optString("browser_download_url")
+                        break
+                    }
                 }
             }
+            if (tag.isBlank()) null else Pair(tag, apkUrl)
+        } catch (e: Exception) {
+            Log.w(TAG, "Update check failed: ${e.message}")
+            null
         }
-        if (tag.isBlank()) null else Pair(tag, apkUrl)
-    } catch (e: Exception) {
-        Log.w(TAG, "Update check failed: ${e.message}")
-        null
     }
 
     fun isNewer(remote: String, current: String): Boolean {
@@ -88,20 +91,22 @@ object UpdaterUtils {
         return false
     }
 
-    private fun download(url: String, context: Context): File? = try {
-        val connection = URL(url).openConnection() as HttpURLConnection
-        connection.connectTimeout = 10000
-        connection.readTimeout = 30000
-        connection.setRequestProperty("User-Agent", "freeboost-android")
-        if (connection.responseCode !in 200..299) return null
-        val file = File(context.cacheDir, "update.apk")
-        connection.inputStream.use { input ->
-            file.outputStream().use { output -> input.copyTo(output) }
+    private fun download(url: String, context: Context): File? {
+        return try {
+            val connection = URL(url).openConnection() as HttpURLConnection
+            connection.connectTimeout = 10000
+            connection.readTimeout = 30000
+            connection.setRequestProperty("User-Agent", "freeboost-android")
+            if (connection.responseCode !in 200..299) return null
+            val file = File(context.cacheDir, "update.apk")
+            connection.inputStream.use { input ->
+                file.outputStream().use { output -> input.copyTo(output) }
+            }
+            file
+        } catch (e: Exception) {
+            Log.w(TAG, "APK download failed: ${e.message}")
+            null
         }
-        file
-    } catch (e: Exception) {
-        Log.w(TAG, "APK download failed: ${e.message}")
-        null
     }
 
     private fun showInstallNotification(context: Context, apk: File, tag: String) {
