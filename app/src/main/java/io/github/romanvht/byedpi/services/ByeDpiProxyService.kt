@@ -106,7 +106,7 @@ class ByeDpiProxyService : LifecycleService() {
             }
         } catch (e: Exception) {
             Log.e(TAG, "Failed to start proxy", e)
-            updateStatus(ServiceStatus.Failed)
+            updateStatus(ServiceStatus.Failed, e.message ?: "неизвестная ошибка")
             stop()
         }
     }
@@ -161,7 +161,7 @@ class ByeDpiProxyService : LifecycleService() {
 
             if (code != 0) {
                 Log.e(TAG, "Proxy stopped with code $code")
-                updateStatus(ServiceStatus.Failed)
+                updateStatus(ServiceStatus.Failed, "код $code")
                 stopSelf()
             }
         }
@@ -202,7 +202,7 @@ class ByeDpiProxyService : LifecycleService() {
     private fun getByeDpiPreferences(): ByeDpiProxyPreferences =
         ByeDpiProxyPreferences.fromSharedPreferences(getPreferences(), this)
 
-    private fun updateStatus(newStatus: ServiceStatus) {
+    private fun updateStatus(newStatus: ServiceStatus, reason: String? = null) {
         Log.d(TAG, "Proxy status changed from $status to $newStatus")
 
         status = newStatus
@@ -227,6 +227,9 @@ class ByeDpiProxyService : LifecycleService() {
             }
         )
         intent.putExtra(SENDER, Sender.Proxy.ordinal)
+        if (reason != null) {
+            intent.putExtra(REASON, reason)
+        }
         sendBroadcast(intent)
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {

@@ -130,11 +130,16 @@ class MainActivity : BaseActivity() {
                 STOPPED_BROADCAST -> updateStatus()
 
                 FAILED_BROADCAST -> {
+                    val reason = intent.getStringExtra(REASON)
+                    val baseText = getString(R.string.failed_to_start, sender.name)
+                    val text = if (reason.isNullOrBlank()) baseText else "$baseText: $reason"
+
                     Toast.makeText(
                         context,
-                        getString(R.string.failed_to_start, sender.name),
-                        Toast.LENGTH_SHORT,
+                        text,
+                        Toast.LENGTH_LONG,
                     ).show()
+
                     updateStatus()
                 }
 

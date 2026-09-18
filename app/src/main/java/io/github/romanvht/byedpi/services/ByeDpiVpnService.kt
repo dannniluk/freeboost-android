@@ -145,7 +145,7 @@ class ByeDpiVpnService : LifecycleVpnService() {
             ServiceManager.stop(this)
             if (!waitForAppStatus(AppStatus.Halted)) {
                 Log.e(TAG, "Failed to stop proxy service, aborting VPN start")
-                updateStatus(ServiceStatus.Failed)
+                updateStatus(ServiceStatus.Failed, "не удалось остановить прокси-службу")
                 stopSelf()
                 return
             }
@@ -160,7 +160,7 @@ class ByeDpiVpnService : LifecycleVpnService() {
             watchdog = Watchdog(this, lifecycleScope).also { it.start() }
         } catch (e: Exception) {
             Log.e(TAG, "Failed to start VPN", e)
-            updateStatus(ServiceStatus.Failed)
+            updateStatus(ServiceStatus.Failed, e.message ?: "неизвестная ошибка")
             stop()
         }
     }
@@ -231,7 +231,7 @@ class ByeDpiVpnService : LifecycleVpnService() {
 
             if (code != 0) {
                 Log.e(TAG, "Proxy stopped with code $code")
-                updateStatus(ServiceStatus.Failed)
+                updateStatus(ServiceStatus.Failed, "код $code")
                 stopTun2Socks()
                 stopSelf()
             }
@@ -358,7 +358,7 @@ class ByeDpiVpnService : LifecycleVpnService() {
     private fun getByeDpiPreferences(): ByeDpiProxyPreferences =
         ByeDpiProxyPreferences.fromSharedPreferences(getPreferences(), this)
 
-    private fun updateStatus(newStatus: ServiceStatus) {
+    private fun updateStatus(newStatus: ServiceStatus, reason: String? = null) {
         Log.d(TAG, "VPN status changed from $status to $newStatus")
 
         status = newStatus
@@ -384,6 +384,9 @@ class ByeDpiVpnService : LifecycleVpnService() {
             }
         )
         intent.putExtra(SENDER, Sender.VPN.ordinal)
+        if (reason != null) {
+            intent.putExtra(REASON, reason)
+        }
         sendBroadcast(intent)
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {

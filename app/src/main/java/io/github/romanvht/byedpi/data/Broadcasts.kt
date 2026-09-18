@@ -7,6 +7,7 @@ const val STOPPED_BROADCAST = "${BuildConfig.APPLICATION_ID}.STOPPED"
 const val FAILED_BROADCAST = "${BuildConfig.APPLICATION_ID}.FAILED"
 
 const val SENDER = "sender"
+const val REASON = "reason"
 
 enum class Sender(val senderName: String) {
     Proxy("Proxy"),
