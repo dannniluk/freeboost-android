@@ -138,6 +138,19 @@ class ByeDpiVpnService : LifecycleVpnService() {
             return
         }
 
+        // A leftover proxy-mode instance holds the core — starting the VPN
+        // on top of it fails with "proxy stopped with code N". Stop it first.
+        if (appStatus.first == AppStatus.Running && appStatus.second == Mode.Proxy) {
+            Log.w(TAG, "Proxy service still running, stopping before VPN start")
+            ServiceManager.stop(this)
+            if (!waitForAppStatus(AppStatus.Halted)) {
+                Log.e(TAG, "Failed to stop proxy service, aborting VPN start")
+                updateStatus(ServiceStatus.Failed)
+                stopSelf()
+                return
+            }
+        }
+
         try {
             mutex.withLock {
                 startProxy()
@@ -150,6 +163,15 @@ class ByeDpiVpnService : LifecycleVpnService() {
             updateStatus(ServiceStatus.Failed)
             stop()
         }
+    }
+
+    private suspend fun waitForAppStatus(target: AppStatus, timeoutMs: Long = 5000L): Boolean {
+        val start = System.currentTimeMillis()
+        while (System.currentTimeMillis() - start < timeoutMs) {
+            if (appStatus.first == target) return true
+            delay(150)
+        }
+        return false
     }
 
     private fun startForeground() {

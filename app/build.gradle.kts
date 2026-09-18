@@ -17,8 +17,8 @@ android {
         minSdk = 21
         //noinspection OldTargetApi
         targetSdk = 34
-        versionCode = 1780
-        versionName = "1.7.8"
+        versionCode = 21
+        versionName = "0.2.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
@@ -32,15 +32,27 @@ android {
         viewBinding = true
     }
 
+    signingConfigs {
+        create("freeboost") {
+            storeFile = file("keystore/freeboost.p12")
+            storePassword = "freeboost"
+            keyAlias = "freeboost"
+            keyPassword = "freeboost"
+            storeType = "PKCS12"
+        }
+    }
+
     buildTypes {
+        debug {
+            buildConfigField("String", "VERSION_NAME",  "\"${defaultConfig.versionName}-debug\"")
+            signingConfig = signingConfigs.getByName("freeboost")
+        }
         release {
             buildConfigField("String", "VERSION_NAME",  "\"${defaultConfig.versionName}\"")
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
             isMinifyEnabled = true
             isShrinkResources = true
-        }
-        debug {
-            buildConfigField("String", "VERSION_NAME",  "\"${defaultConfig.versionName}-debug\"")
+            signingConfig = signingConfigs.getByName("freeboost")
         }
     }
 
