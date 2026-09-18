@@ -13,6 +13,7 @@ import io.github.romanvht.byedpi.R
 import io.github.romanvht.byedpi.activities.MainActivity
 import io.github.romanvht.byedpi.core.ByeDpiProxy
 import io.github.romanvht.byedpi.core.ByeDpiProxyPreferences
+import io.github.romanvht.byedpi.core.LocalDnsServer
 import io.github.romanvht.byedpi.core.TProxyService
 import io.github.romanvht.byedpi.data.*
 import io.github.romanvht.byedpi.utility.*
@@ -28,6 +29,7 @@ import java.io.File
 
 class ByeDpiVpnService : LifecycleVpnService() {
     private val byeDpiProxy = ByeDpiProxy()
+    private val localDnsServer by lazy { LocalDnsServer(this) }
     private var proxyJob: Job? = null
     private var tunFd: ParcelFileDescriptor? = null
     private val mutex = Mutex()
@@ -37,6 +39,7 @@ class ByeDpiVpnService : LifecycleVpnService() {
         private const val FOREGROUND_SERVICE_ID: Int = 1
         private const val PAUSE_NOTIFICATION_ID: Int = 3
         private const val NOTIFICATION_CHANNEL_ID: String = "ByeDPIVpn"
+        private const val TUN_IP: String = "10.10.10.10"
 
         private var status: ServiceStatus = ServiceStatus.Disconnected
     }
@@ -52,6 +55,7 @@ class ByeDpiVpnService : LifecycleVpnService() {
 
     override fun onDestroy() {
         super.onDestroy()
+        localDnsServer.stop()
         tunFd?.close()
     }
 
@@ -251,6 +255,7 @@ class ByeDpiVpnService : LifecycleVpnService() {
 
         val dns = sharedPreferences.getStringNotNull("dns_ip", "1.1.1.1")
         val ipv6 = sharedPreferences.getBoolean("ipv6_enable", false)
+        val dohEnabled = sharedPreferences.getBoolean("byedpi_doh", true)
 
         val tun2socksConfig = buildString {
             appendLine("tunnel:")
@@ -274,10 +279,15 @@ class ByeDpiVpnService : LifecycleVpnService() {
             throw e
         }
 
-        val fd = createBuilder(dns, ipv6).establish()
+        val fd = createBuilder(dns, ipv6, dohEnabled).establish()
             ?: throw IllegalStateException("VPN connection failed")
 
         this.tunFd = fd
+
+        if (dohEnabled) {
+            // local DoH resolver on the TUN address, immune to plain-DNS hijacking
+            localDnsServer.start(TUN_IP)
+        }
 
         TProxyService.TProxyStartService(configPath.absolutePath, fd.fd)
 
@@ -286,6 +296,8 @@ class ByeDpiVpnService : LifecycleVpnService() {
 
     private fun stopTun2Socks() {
         Log.i(TAG, "Stopping tun2socks")
+
+        localDnsServer.stop()
 
         if (tunFd == null) {
             Log.w(TAG, "VPN field is null, skipping")
@@ -373,8 +385,8 @@ class ByeDpiVpnService : LifecycleVpnService() {
         notificationManager.notify(PAUSE_NOTIFICATION_ID, notification)
     }
 
-    private fun createBuilder(dns: String, ipv6: Boolean): Builder {
-        Log.d(TAG, "DNS: $dns")
+    private fun createBuilder(dns: String, ipv6: Boolean, dohEnabled: Boolean): Builder {
+        Log.d(TAG, "DNS: $dns (DoH enabled: $dohEnabled)")
         val builder = Builder()
         builder.setSession("ByeDPI")
         builder.setConfigureIntent(
@@ -386,7 +398,7 @@ class ByeDpiVpnService : LifecycleVpnService() {
             )
         )
 
-        builder.addAddress("10.10.10.10", 32)
+        builder.addAddress(TUN_IP, 32)
             .addRoute("0.0.0.0", 0)
 
         if (ipv6) {
@@ -394,7 +406,10 @@ class ByeDpiVpnService : LifecycleVpnService() {
                 .addRoute("::", 0)
         }
 
-        if (dns.isNotBlank()) {
+        if (dohEnabled) {
+            // route system DNS to our local DoH resolver bound on the TUN address
+            builder.addDnsServer(TUN_IP)
+        } else if (dns.isNotBlank()) {
             builder.addDnsServer(dns)
         }
 

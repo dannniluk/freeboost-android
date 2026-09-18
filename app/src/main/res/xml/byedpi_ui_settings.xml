@@ -157,6 +157,20 @@
             android:defaultValue="true"
             app:iconSpaceReserved="false" />
 
+        <CheckBoxPreference
+            android:key="byedpi_quic_block"
+            android:title="@string/quic_block"
+            android:summary="@string/quic_block_summary"
+            android:defaultValue="true"
+            app:iconSpaceReserved="false" />
+
+        <CheckBoxPreference
+            android:key="byedpi_doh"
+            android:title="@string/doh_enable"
+            android:summary="@string/doh_enable_summary"
+            android:defaultValue="true"
+            app:iconSpaceReserved="false" />
+
     </androidx.preference.PreferenceCategory>
 
     <androidx.preference.PreferenceCategory

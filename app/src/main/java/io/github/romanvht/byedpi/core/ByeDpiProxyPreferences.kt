@@ -158,6 +158,10 @@ class ByeDpiProxyUIPreferences(val settings: UISettings = UISettings()) : ByeDpi
                 args.add("-An")
             }
 
+            if (settings.quicBlock) {
+                args.add("--quic-block")
+            }
+
             Log.d("ProxyPref", "UI to cmd: ${args.joinToString(" ")}")
             return args.toTypedArray()
         }

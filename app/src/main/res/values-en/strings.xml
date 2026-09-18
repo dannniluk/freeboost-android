@@ -83,6 +83,10 @@
     <string name="byedpi_hosts_whitelist_setting">Host whitelist</string>
     <string name="byedpi_tcp_fast_open_setting">TCP Fast Open</string>
     <string name="byedpi_udp_fake_count">Number of fake UDP</string>
+    <string name="quic_block">Block QUIC (UDP/443)</string>
+    <string name="quic_block_summary">YouTube falls back to TCP which is handled by the bypass. Recommended for stability</string>
+    <string name="doh_enable">Encrypted DNS (DoH)</string>
+    <string name="doh_enable_summary">Protects against ISP DNS hijacking. Queries go over HTTPS to dns.google / AdGuard</string>
     <string name="ipv6_setting">IPv6</string>
     <string name="byedpi_fake_offset_setting">Fake packet offset</string>
     <string name="byedpi_drop_sack_setting">Drop SACK</string>
