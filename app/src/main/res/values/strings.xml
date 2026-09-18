@@ -87,6 +87,16 @@
     <string name="quic_block_summary">YouTube не сможет использовать QUIC и переключится на TCP, который обрабатывается обходом. Рекомендуется для стабильности</string>
     <string name="doh_enable">Шифрованный DNS (DoH)</string>
     <string name="doh_enable_summary">Защита от подмены DNS провайдером. Запросы идут по HTTPS к dns.google / AdGuard</string>
+    <string name="autotune_started">Подбираем рабочую стратегию для вашего провайдера… Это займёт 1–3 минуты</string>
+    <string name="autotune_enable">Автоподбор стратегии</string>
+    <string name="autotune_enable_summary">При первом запуске приложение само найдёт рабочую комбинацию обхода</string>
+    <string name="watchdog_enable">Контроль соединения</string>
+    <string name="watchdog_enable_summary">Если YouTube начал подвисать — приложение само переключит стратегию и восстановит просмотр</string>
+    <string name="auto_update">Автообновление</string>
+    <string name="auto_update_summary">Проверять новые версии и предлагать установку в одно нажатие</string>
+    <string name="update_channel_name">Обновления</string>
+    <string name="update_available_title">Доступна новая версия</string>
+    <string name="update_available_text">Версия %1$s готова к установке — нажмите, чтобы обновить</string>
     <string name="ipv6_setting">IPv6</string>
     <string name="byedpi_fake_offset_setting">Смещение поддельных пакетов</string>
     <string name="byedpi_drop_sack_setting">Отбрасывать SACK</string>

@@ -82,6 +82,27 @@
             android:title="@string/autoconnect_settings"
             android:defaultValue="false" />
 
+        <SwitchPreference
+            android:key="byedpi_autotune_enable"
+            android:icon="@drawable/ic_speed"
+            android:title="@string/autotune_enable"
+            android:summary="@string/autotune_enable_summary"
+            android:defaultValue="true" />
+
+        <SwitchPreference
+            android:key="byedpi_watchdog_enable"
+            android:icon="@drawable/ic_network"
+            android:title="@string/watchdog_enable"
+            android:summary="@string/watchdog_enable_summary"
+            android:defaultValue="true" />
+
+        <SwitchPreference
+            android:key="byedpi_auto_update"
+            android:icon="@drawable/ic_info"
+            android:title="@string/auto_update"
+            android:summary="@string/auto_update_summary"
+            android:defaultValue="true" />
+
     </androidx.preference.PreferenceCategory>
 
     <androidx.preference.PreferenceCategory

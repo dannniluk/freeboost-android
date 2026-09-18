@@ -15,6 +15,7 @@ import io.github.romanvht.byedpi.core.ByeDpiProxy
 import io.github.romanvht.byedpi.core.ByeDpiProxyPreferences
 import io.github.romanvht.byedpi.core.LocalDnsServer
 import io.github.romanvht.byedpi.core.TProxyService
+import io.github.romanvht.byedpi.core.Watchdog
 import io.github.romanvht.byedpi.data.*
 import io.github.romanvht.byedpi.utility.*
 import kotlinx.coroutines.Dispatchers
@@ -32,6 +33,7 @@ class ByeDpiVpnService : LifecycleVpnService() {
     private val localDnsServer by lazy { LocalDnsServer(this) }
     private var proxyJob: Job? = null
     private var tunFd: ParcelFileDescriptor? = null
+    private var watchdog: Watchdog? = null
     private val mutex = Mutex()
 
     companion object {
@@ -142,6 +144,7 @@ class ByeDpiVpnService : LifecycleVpnService() {
                 startTun2Socks()
                 updateStatus(ServiceStatus.Connected)
             }
+            watchdog = Watchdog(this, lifecycleScope).also { it.start() }
         } catch (e: Exception) {
             Log.e(TAG, "Failed to start VPN", e)
             updateStatus(ServiceStatus.Failed)
@@ -164,6 +167,9 @@ class ByeDpiVpnService : LifecycleVpnService() {
 
     private suspend fun stop() {
         Log.i(TAG, "Stopping")
+
+        watchdog?.stop()
+        watchdog = null
 
         if (status != ServiceStatus.Connected) {
             Log.w(TAG, "VPN not connected")

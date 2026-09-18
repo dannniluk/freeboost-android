@@ -7,7 +7,7 @@ import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.PreferenceManager
 import io.github.romanvht.byedpi.data.Mode
 
-private const val DEFAULT_CMD_ARGS = "-o1 -a1 -r-5+se"
+private const val DEFAULT_CMD_ARGS = "-o1 -a1 -r-5+se --quic-block"
 
 val PreferenceFragmentCompat.sharedPreferences
     get() = preferenceScreen.sharedPreferences

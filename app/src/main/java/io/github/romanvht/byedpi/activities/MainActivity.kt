@@ -25,6 +25,8 @@ import androidx.core.content.ContextCompat
 import androidx.core.content.edit
 import androidx.lifecycle.lifecycleScope
 import io.github.romanvht.byedpi.R
+import io.github.romanvht.byedpi.core.RemotePresets
+import io.github.romanvht.byedpi.core.StrategyAutotune
 import io.github.romanvht.byedpi.data.*
 import io.github.romanvht.byedpi.databinding.ActivityMainBinding
 import io.github.romanvht.byedpi.services.ServiceManager
@@ -234,6 +236,11 @@ class MainActivity : BaseActivity() {
             this.start()
         }
 
+        lifecycleScope.launch(Dispatchers.IO) {
+            RemotePresets.refreshIfNeeded(this@MainActivity)
+            UpdaterUtils.checkAndOfferUpdate(this@MainActivity)
+        }
+
         ShortcutUtils.update(this)
     }
 
@@ -328,7 +335,25 @@ class MainActivity : BaseActivity() {
     }
 
     private fun start() {
-        when (getPreferences().mode()) {
+        val preferences = getPreferences()
+
+        if (preferences.getBoolean("byedpi_autotune_enable", true) &&
+            !preferences.getBoolean(StrategyAutotune.PREF_AUTOTUNE_DONE, false)
+        ) {
+            // First connect: find a working strategy automatically, then connect
+            Toast.makeText(this, R.string.autotune_started, Toast.LENGTH_LONG).show()
+            binding.statusButtonCard.isClickable = false
+            lifecycleScope.launch(Dispatchers.IO) {
+                StrategyAutotune(this@MainActivity).run()
+                lifecycleScope.launch(Dispatchers.Main) {
+                    binding.statusButtonCard.isClickable = true
+                    start()
+                }
+            }
+            return
+        }
+
+        when (preferences.mode()) {
             Mode.VPN -> {
                 val intentPrepare = VpnService.prepare(this)
                 if (intentPrepare != null) {
